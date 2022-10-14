@@ -38,6 +38,7 @@ class ROSSegmentation():
 
         torch.cuda.set_device(self.cfg.gpu_id)
 
+        # Network Builders
         self.net_encoder = ModelBuilder.build_encoder(arch=self.cfg.MODEL.arch_encoder, 
                                 fc_dim=self.cfg.MODEL.fc_dim, weights=self.cfg.MODEL.weights_encoder)
         self.net_decoder = ModelBuilder.build_decoder(arch=self.cfg.MODEL.arch_decoder, 
@@ -46,7 +47,8 @@ class ROSSegmentation():
         
         self.segmentation_module = SegmentationModule(self.net_encoder, self.net_decoder, 
                                         crit = nn.NLLLoss(ignore_index=-1))
-
+        # After loading, we put it on the GPU
+        # And since we are doing inference, not training, we put the model in eval mode.
         self.segmentation_module.cuda()
         self.segmentation_module.eval()
 
@@ -114,7 +116,8 @@ class ROSSegmentation():
         img_arr = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
 
         data_dict = self.preprocess(img_arr)
-
+        
+        # Run the segmentation at the highest resolution
         with torch.no_grad():
             scores = torch.zeros(1, cfg.DATASET.num_class, self.segSize[0], self.segSize[1])
             scores = async_copy_to(scores, self.cfg.gpu_id)
@@ -127,9 +130,11 @@ class ROSSegmentation():
                 pred_tmp = self.segmentation_module(feed_dict, segSize=self.segSize)
                 scores = scores + pred_tmp / len(self.cfg.DATASET.imgSizes)
 
+            # Get the predicted scores for each pixel
             _, pred = torch.max(scores, dim=1)
             pred = as_numpy(pred.squeeze(0).cpu())
 
+        # Colorize prediction
         pred_color = colorEncode(pred, colors).astype(np.uint8)
 
         out_msg = Image()
