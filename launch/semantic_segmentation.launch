@@ -12,6 +12,8 @@
 
         <!-- GPU ID -->
         <param name="gpu_id" value="0" />
+        <!-- USE CPU -->
+        <param name="use_cpu" value="0" />
         <!-- Path to color mat and class name files -->
         <param name="color150_mat_filepath" value="$(find semantic_segmentation_ros)/data/color150.mat" />
         <param name="objects150_csv_filepath" value="$(find semantic_segmentation_ros)/data/object150_info.csv" />

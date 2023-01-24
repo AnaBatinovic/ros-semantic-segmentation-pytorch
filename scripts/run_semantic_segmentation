@@ -36,8 +36,6 @@ class ROSSegmentation():
         self.target_heights = None
         self.segSize = None
 
-        torch.cuda.set_device(self.cfg.gpu_id)
-
         # Network Builders
         self.net_encoder = ModelBuilder.build_encoder(arch=self.cfg.MODEL.arch_encoder, 
                                 fc_dim=self.cfg.MODEL.fc_dim, weights=self.cfg.MODEL.weights_encoder)
@@ -47,9 +45,17 @@ class ROSSegmentation():
         
         self.segmentation_module = SegmentationModule(self.net_encoder, self.net_decoder, 
                                         crit = nn.NLLLoss(ignore_index=-1))
-        # After loading, we put it on the GPU
+        if self.cfg.use_cpu:
+            # After loading, we put it on the CPU
+            device = torch.device('cpu')
+            self.segmentation_module.to(device)
+            print ("ROSSegmentation -  using CPU.")
+        else:
+            # After loading, we put it on the GPU
+            torch.cuda.set_device(self.cfg.gpu_id)
+            self.segmentation_module.cuda()
+            print ("ROSSegmentation -  using GPU.")
         # And since we are doing inference, not training, we put the model in eval mode.
-        self.segmentation_module.cuda()
         self.segmentation_module.eval()
 
         self.seg_pub = rospy.Publisher("segmentation/color/image_raw", Image, queue_size = 1)
@@ -112,7 +118,7 @@ class ROSSegmentation():
 
 
     def img_cb(self, msg):
-
+        time_start = rospy.Time.now()
         img_arr = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
 
         data_dict = self.preprocess(img_arr)
@@ -120,12 +126,15 @@ class ROSSegmentation():
         # Run the segmentation at the highest resolution
         with torch.no_grad():
             scores = torch.zeros(1, cfg.DATASET.num_class, self.segSize[0], self.segSize[1])
-            scores = async_copy_to(scores, self.cfg.gpu_id)
+            # If using GPU, call async copy to
+            if not self.cfg.use_cpu:
+                scores = async_copy_to(scores, self.cfg.gpu_id)
 
             for img_tensor in data_dict['img_data']:
                 feed_dict = dict()
                 feed_dict['img_data'] = img_tensor
-                feed_dict = async_copy_to(feed_dict, self.cfg.gpu_id)
+                if not self.cfg.use_cpu:
+                    feed_dict = async_copy_to(feed_dict, self.cfg.gpu_id)
 
                 pred_tmp = self.segmentation_module(feed_dict, segSize=self.segSize)
                 scores = scores + pred_tmp / len(self.cfg.DATASET.imgSizes)
@@ -143,6 +152,7 @@ class ROSSegmentation():
         out_msg.step, out_msg.data = pred_color.shape[1]*3,  pred_color.tostring()
 
         self.seg_pub.publish(out_msg)
+        print ("Time per iteration:", (rospy.Time.now() - time_start).to_sec())
         
         return
 
@@ -156,6 +166,7 @@ if __name__ == '__main__':
     rospy.init_node("semantic_segmentation_ros", anonymous=True)
 
     gpu_id = int(rospy.get_param("~gpu_id"))
+    use_cpu = int(rospy.get_param("~use_cpu"))
     color150_mat_filepath = rospy.get_param("~color150_mat_filepath")
     objects150_csv_filepath = rospy.get_param("~objects150_csv_filepath")
     model_ckpt_dir = rospy.get_param("~model_ckpt_dir")
@@ -171,7 +182,7 @@ if __name__ == '__main__':
 
     cfg.merge_from_file(cfg_file_path)
 
-    opts = ["gpu_id", gpu_id, "DIR", model_ckpt_dir]
+    opts = ["gpu_id", gpu_id, "DIR", model_ckpt_dir, "use_cpu", use_cpu]
     cfg.merge_from_list(opts)
 
     rospy.loginfo("Loaded configuration file {}".format(cfg_file_path))

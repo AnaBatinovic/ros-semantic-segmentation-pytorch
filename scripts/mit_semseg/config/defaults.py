@@ -7,6 +7,7 @@ from yacs.config import CfgNode as CN
 _C = CN()
 _C.DIR = "ckpt/ade20k-resnet50dilated-ppm_deepsup"
 _C.gpu_id = 0
+_C.use_cpu = 1
 
 # -----------------------------------------------------------------------------
 # Dataset
