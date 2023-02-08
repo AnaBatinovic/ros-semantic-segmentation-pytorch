@@ -8,13 +8,14 @@ The implementation is in Python3 over PyTorch GPU, and holds training and evalua
 ## Environment
 The code is tested under the following configuration.
 - Ubuntu 18.04 LTS
-- **CUDA=10.2**
+- **CUDA=10.2 or CPU only**
 - **PyTorch>=1.5.1**
 - **ROS Melodic**
 
 
-## 1. Installation
-
+## 1. Installation using Docker
+TODO
+## 2. Installation - catkin workspace
 ### A. Prerequisities
 
 - Install ROS by following the official [ROS website](https://www.ros.org/install/).
@@ -44,7 +45,7 @@ echo 'source ~/catkin_ws/devel/setup.bash' >> ~/.bashrc
 
 # Clone repo
 cd ~/catkin_ws/src
-git clone https://github.com/pranay731/ros-semantic-segmentation-pytorch.git
+git clone https://github.com/AnaBatinovic/ros-semantic-segmentation-pytorch.git
 
 sudo chmod +x ros-semantic-segmentation-pytorch/scripts/run_semantic_segmentation
 
@@ -59,13 +60,14 @@ A number of models are available. Default is **resnet50dilated** for encoder and
 Download pretrained checkpoints for models from [CSAIL Website](http://sceneparsing.csail.mit.edu/model/pytorch) and copy them to ***src/ros-semantic-segmentation-pytorch/ckpt/{modelname}/***
 
 
-## 2. Usage
+## 3. Usage
 
 ### A. Inference
 
 Launch file :
 - Input topic -> raw image rgb topic.
 - gpu_id -> set gpu id for multiple gpu system else 0.
+- use_cpu -> set 1 if using cpu only else 0.
 - cfg_filepath -> path to config file. Should be according to model.
 - model_ckpt_dir -> path to directory containing downloaded checkpoints.
 
