@@ -59,6 +59,19 @@ source ~/catkin_ws/devel/setup.bash
 A number of models are available. Default is **resnet50dilated** for encoder and **ppm_deepsup** for decoder.
 Download pretrained checkpoints for models from [CSAIL Website](http://sceneparsing.csail.mit.edu/model/pytorch) and copy them to ***src/ros-semantic-segmentation-pytorch/ckpt/{modelname}/***
 
+Example:
+
+```
+# Create directories
+cd ~/catkin_ws/src/ros-semantic-segmentation-pytorch/
+mkdir ckpt
+cd ckpt 
+mkdir ade20k-resnet50dilated-ppm_deepsup
+
+# Navigate to the decoder and encoder files and run:
+docker cp decoder_epoch_20.pth CONT_ID:/root/catkin_ws/src/ros-semantic-segmentation-pytorch/ckpt/ade20k-resnet50dilated-ppm_deepsup
+docker cp encoder_epoch_20.pth CONT_ID:/root/catkin_ws/src/ros-semantic-segmentation-pytorch/ckpt/ade20k-resnet50dilated-ppm_deepsup
+```
 
 ## 3. Usage
 

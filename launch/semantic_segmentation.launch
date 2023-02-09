@@ -1,31 +1,39 @@
 
 <launch>
+    <arg name="namespace" default="$(env UAV_NAMESPACE)"/>
 
-    <node name="semantic_segmentation_ros" pkg="semantic_segmentation_ros" type="run_semantic_segmentation" output="screen" >
-        
-        <!-- Input -->
-        <!-- Color image_raw topic to="/topic/name" -->
-        <remap from="camera/color/image_raw"             to="/camera/color/image_raw"/>
-        <!-- Output -->
-        <!-- Rename output topic if required -->
-        <remap from="segmentation/color/image_raw"        to="/segmentation/color/image_raw" />
+    <group ns="$(arg namespace)">
+         <node name="semantic_segmentation_ros" pkg="semantic_segmentation_ros" type="run_semantic_segmentation" output="screen" >
+            
+            <!-- Input -->
+            <!-- Color image_raw topic to="/topic/name" -->
+            <remap from="camera/color/image_raw"             to="/camera/color/image_raw"/>
+            <!-- Output -->
+            <!-- Rename output topic if required -->
+            <remap from="segmentation/color/image_raw"       to="/segmentation/color/image_raw" />
 
-        <!-- GPU ID -->
-        <param name="gpu_id" value="0" />
-        <!-- USE CPU -->
-        <param name="use_cpu" value="0" />
-        <!-- Path to color mat and class name files -->
-        <param name="color150_mat_filepath" value="$(find semantic_segmentation_ros)/data/color150.mat" />
-        <param name="objects150_csv_filepath" value="$(find semantic_segmentation_ros)/data/object150_info.csv" />
-        
-        <!-- Path to configuration file. Change path according to encoder-decoder -->
-        <param name="cfg_filepath" value="$(find semantic_segmentation_ros)/config/ade20k-resnet50dilated-ppm_deepsup.yaml" />
-        <!-- Path to model ckpt dir. -->
-        <param name="model_ckpt_dir" value="$(find semantic_segmentation_ros)/ckpt/ade20k-resnet50dilated-ppm_deepsup" />
+            <!-- GPU ID -->
+            <param name="gpu_id" value="0" />
+            <!-- USE CPU -->
+            <param name="use_cpu" value="1" />
+            <!-- Path to color mat and class name files -->
+            <param name="color150_mat_filepath" value="$(find semantic_segmentation_ros)/data/color150.mat" />
+            <param name="objects150_csv_filepath" value="$(find semantic_segmentation_ros)/data/object150_info.csv" />
+            
+            <!-- Path to configuration file. Change path according to encoder-decoder -->
+            <param name="cfg_filepath" value="$(find semantic_segmentation_ros)/config/ade20k-resnet50dilated-ppm_deepsup.yaml" />
+            <!-- Path to model ckpt dir. -->
+            <param name="model_ckpt_dir" value="$(find semantic_segmentation_ros)/ckpt/ade20k-resnet50dilated-ppm_deepsup" />
+        </node>
 
-
-    </node>   
-
+        <node name="image_feature" pkg="semantic_segmentation_ros" type="labeling.py" output="screen" >
+            <remap from="camera/color/image_raw"                    to="/camera/color/image_raw"/>
+            <remap from="segmentation/color/image_raw"              to="/segmentation/color/image_raw" />
+            <remap from="camera/aligned_depth_to_color/image_raw"   to="/camera/aligned_depth_to_color/image_raw" />
+            <remap from="labeled/color/image_raw"                   to="/labeled/color/image_raw" />
+            <remap from="labeled/color/image_segmented"             to="/labeled/color/image_segmented" />
+        </node>
+    </group>
 
 </launch>
 
