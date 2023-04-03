@@ -1,0 +1,1 @@
+semantic_segmentation_ros/SegmentationObject[] objects 
