@@ -3,7 +3,28 @@ project(semantic_segmentation_ros)
 
 find_package(catkin REQUIRED COMPONENTS
     rospy
+    std_msgs
+    geometry_msgs
+    sensor_msgs
+    message_generation
 )
 
+add_message_files(
+    FILES
+    SegmentationNameMask.msg
+    SegmentationObject.msg
+    SegmentationObjectArray.msg
+)
 
-catkin_package()
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+)
+
+catkin_package( 
+	CATKIN_DEPENDS message_runtime
+)
+
+include_directories(include ${catkin_INCLUDE_DIRS})
