@@ -56,6 +56,10 @@ class ROSSegmentation():
 
         self.seg_pub = rospy.Publisher("segmentation/color/image_raw", Image, queue_size = 1)
         self.img_sub = rospy.Subscriber("camera/color/image_raw", Image, self.img_cb, queue_size=1, buff_size=2**24)
+        
+        # Define classes you want to extract
+        # Chair, table, desk
+        self.class_value = rospy.get_param("~classes")
 
         rospy.loginfo("Initialization Done. Running Inference .....")
 
@@ -114,7 +118,6 @@ class ROSSegmentation():
         # filter prediction class if requested
         pred = pred.copy()
         pred[~np.isin(pred, classes)] = -1
-        
         # colorize prediction
         return colorEncode(pred, colors).astype(np.uint8)
 
@@ -149,9 +152,8 @@ class ROSSegmentation():
         pred_color = colorEncode(pred, colors).astype(np.uint8)
  
         predicted_classes = np.bincount(pred.flatten()).argsort()[::-1]
-        # Go through classes you want
-        class_value = [19, 15, 33]
-        new_pred_color = self.get_class(msg.data, pred, class_value)
+
+        new_pred_color = self.get_class(msg.data, pred, self.class_value)
              
         out_msg = Image()
         out_msg.header, out_msg.encoding  = msg.header, "rgb8"

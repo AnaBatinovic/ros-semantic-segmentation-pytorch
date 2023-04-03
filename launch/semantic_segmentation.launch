@@ -1,16 +1,22 @@
 
 <launch>
     <arg name="namespace" default="$(env UAV_NAMESPACE)"/>
+    <arg name="camera_image_raw" default="camera/color/image_raw"/>
+    <arg name="camera_depth_image_raw" default="camera/depth/image_raw"/>
+    <arg name="segmentation_image_raw" default="segmentation/color/image_raw"/>
+    <arg name="labeled_image_raw" default="labeled/color/image_raw"/>
+    <arg name="labeled_image_segmented" default="labeled/color/image_segmented"/>
+    <arg name="classes" default="[19]"/>
 
     <group ns="$(arg namespace)">
          <node name="semantic_segmentation_ros" pkg="semantic_segmentation_ros" type="run_semantic_segmentation" output="screen" >
             
             <!-- Input -->
             <!-- Color image_raw topic to="/topic/name" -->
-            <remap from="camera/color/image_raw"             to="/camera/color/image_raw"/>
+            <remap from="camera/color/image_raw"             to="$(arg camera_image_raw)"/>
             <!-- Output -->
             <!-- Rename output topic if required -->
-            <remap from="segmentation/color/image_raw"       to="/segmentation/color/image_raw" />
+            <remap from="segmentation/color/image_raw"       to="$(arg segmentation_image_raw)"/>
 
             <!-- GPU ID -->
             <param name="gpu_id" value="0" />
@@ -21,17 +27,15 @@
             <param name="objects150_csv_filepath" value="$(find semantic_segmentation_ros)/data/object150_info.csv" />
             
             <!-- Path to configuration file. Change path according to encoder-decoder -->
-            <param name="cfg_filepath" value="$(find semantic_segmentation_ros)/config/ade20k-resnet50dilated-ppm_deepsup.yaml" />
+            <param name="cfg_filepath" value="$(find semantic_segmentation_ros)/config/ade20k-hrnetv2.yaml" />
             <!-- Path to model ckpt dir. -->
-            <param name="model_ckpt_dir" value="$(find semantic_segmentation_ros)/ckpt/ade20k-resnet50dilated-ppm_deepsup" />
+            <param name="model_ckpt_dir" value="$(find semantic_segmentation_ros)/ckpt/ade20k-hrnet2-c1" />
+            <!-- Classes that are extracted. -->
+            <rosparam param="classes" subst_value="True">$(arg classes)</rosparam> 
         </node>
 
-        <node name="image_feature" pkg="semantic_segmentation_ros" type="labeling.py" output="screen" >
-            <remap from="camera/color/image_raw"                    to="/camera/color/image_raw"/>
-            <remap from="segmentation/color/image_raw"              to="/segmentation/color/image_raw" />
-            <remap from="camera/aligned_depth_to_color/image_raw"   to="/camera/aligned_depth_to_color/image_raw" />
-            <remap from="labeled/color/image_raw"                   to="/labeled/color/image_raw" />
-            <remap from="labeled/color/image_segmented"             to="/labeled/color/image_segmented" />
+        <node name="create_mask" pkg="semantic_segmentation_ros" type="create_mask.py" output="screen" >
+            <remap from="segmentation/color/image_raw"              to="$(arg segmentation_image_raw)"/>
         </node>
     </group>
 
