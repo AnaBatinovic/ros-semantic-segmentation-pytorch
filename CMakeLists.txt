@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
     FILES
     SegmentationNameMask.msg
+    SegmentationNameMaskArray.msg
     SegmentationObject.msg
     SegmentationObjectArray.msg
 )
