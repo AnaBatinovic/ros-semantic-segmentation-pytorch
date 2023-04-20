@@ -9,7 +9,7 @@
     <arg name="classes" default="[19]"/>
 
     <group ns="$(arg namespace)">
-         <node name="semantic_segmentation_ros" pkg="semantic_segmentation_ros" type="run_semantic_segmentation" output="screen" >
+        <node name="semantic_segmentation_ros" pkg="semantic_segmentation_ros" type="run_semantic_segmentation" output="screen" >
             
             <!-- Input -->
             <!-- Color image_raw topic to="/topic/name" -->
@@ -29,7 +29,7 @@
             <!-- Path to configuration file. Change path according to encoder-decoder -->
             <param name="cfg_filepath" value="$(find semantic_segmentation_ros)/config/ade20k-hrnetv2.yaml" />
             <!-- Path to model ckpt dir. -->
-            <param name="model_ckpt_dir" value="$(find semantic_segmentation_ros)/ckpt/ade20k-hrnet2-c1" />
+            <param name="model_ckpt_dir" value="$(find semantic_segmentation_ros)/ckpt/ade20k-hrnetv2-c1" />
             <!-- Classes that are extracted. -->
             <rosparam param="classes" subst_value="True">$(arg classes)</rosparam> 
         </node>
