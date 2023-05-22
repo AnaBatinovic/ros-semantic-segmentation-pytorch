@@ -6,8 +6,8 @@
     <arg name="segmentation_image_raw" default="segmentation/color/image_raw"/>
     <arg name="labeled_image_raw" default="labeled/color/image_raw"/>
     <arg name="labeled_image_segmented" default="labeled/color/image_segmented"/>
-    <arg name="classes" default="[19]"/>
-
+    <!-- warehouse equipment: door, shelf, box, stairs -->
+    <arg name="classes" default="[14, 24, 41, 53]"/>
     <group ns="$(arg namespace)">
         <node name="semantic_segmentation_ros" pkg="semantic_segmentation_ros" type="run_semantic_segmentation" output="screen" >
             
