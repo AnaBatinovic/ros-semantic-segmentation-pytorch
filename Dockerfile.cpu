@@ -1,0 +1,98 @@
+FROM ubuntu:18.04
+
+ARG CATKIN_WORKSPACE=uav_ws
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_DISTRO=melodic
+ARG HOME=/root
+
+# Install all the things to stop docker build from breaking
+RUN ln -fs /usr/share/zoneinfo/Europe/Zagreb /etc/localtime && \
+    apt-get update && apt-get install -q -y \
+    git \
+    sudo \
+    lsb-release \
+    gnupg2 \
+    apt-utils \
+    dialog \
+    curl \
+    ca-certificates \
+    bzip2 \
+    libx11-6 \
+    tzdata && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
+# Install ROS
+RUN curl https://raw.githubusercontent.com/larics/uav_ros_stack/main/installation/dependencies/ros.sh | bash
+
+# Install General ROS things
+RUN curl https://raw.githubusercontent.com/larics/uav_ros_stack/main/installation/dependencies/general.sh | bash
+
+
+# Install Realsense specific dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        openssh-server \
+        libmysqlclient-dev \
+        ros-$ROS_DISTRO-realsense2-camera \
+        ros-$ROS_DISTRO-rgbd-launch \
+        ros-$ROS_DISTRO-realsense2-description \
+        libglew-dev \
+        libglfw3 \
+        libglfw3-dev \
+        software-properties-common \
+        libnvidia-gl-440 \
+        nano \
+        tmux \
+        git-gui
+
+# Set realsense rules
+RUN curl https://raw.githubusercontent.com/IntelRealSense/librealsense/master/config/99-realsense-libusb.rules >> /etc/udev/rules.d/99-realsense-libusb.rules
+
+# Agent forwarding during docker build https://stackoverflow.com/questions/43418188/ssh-agent-forwarding-during-docker-build
+# install ssh client and git
+RUN apt-get install openssh-client git
+
+# Download public key for github.com
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+# Install Miniconda (the latest vesion !!! hahhaha) and Python 3.8
+ENV CONDA_AUTO_UPDATE_CONDA=false
+ENV PATH=$HOME/miniconda/bin:$PATH
+RUN curl -sLo ~/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh | bash \
+ && chmod +x ~/miniconda.sh \
+ && ~/miniconda.sh -b -p ~/miniconda \
+ && rm ~/miniconda.sh \
+ && conda install -y python==3.8.1 \
+ && conda clean -ya
+
+# CUDA 10.2-specific steps
+RUN conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+# Install packages neccessary for training and testing neural networks
+RUN conda install -c anaconda \
+                     scipy \
+                     configargparse \
+                     cython \
+                     pyyaml
+ 
+RUN conda install -c conda-forge \
+                     progress \
+                     json_tricks \
+                     tensorboardx \
+                     easydict \
+                     opencv \
+                     pycocotools
+RUN pip install -U rospkg \
+                    yacs
+
+# Install workspace
+RUN curl https://raw.githubusercontent.com/larics/uav_ros_stack/main/installation/workspace_setup.sh | bash -s $CATKIN_WORKSPACE
+
+# Clone and build other packages
+WORKDIR $HOME/$CATKIN_WORKSPACE/src
+RUN  --mount=type=ssh git clone git@github.com:AnaBatinovic/ros-semantic-segmentation-pytorch.git
+RUN catkin build --limit-status-rate 0.2 --jobs 3
+RUN echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+RUN echo "source ~/$CATKIN_WORKSPACE/devel/setup.bash" >> ~/.bashrc
+  
+WORKDIR $HOME/$CATKIN_WORKSPACE/src/ros-semantic-segmentation-pytorch
+
