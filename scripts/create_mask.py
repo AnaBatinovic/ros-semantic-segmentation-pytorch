@@ -1,9 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import rospy
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
 import cv2
+from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from color_coding_dict import *
 import time
@@ -27,7 +27,7 @@ class CreateMask:
 
         self.segmentation_name_mask = SegmentationNameMask()
         self.segmentation_name_mask_array = SegmentationNameMaskArray()
-
+    
     def image_callback(self, msg):
         self.segmentation_name_mask_array.masks = []
         try:
@@ -64,7 +64,7 @@ class CreateMask:
             mask_img = cv2.inRange(hsv_img, lower_bound, upper_bound)
 
             # Segment only the detected region
-            _, contours, hierarchy = cv2.findContours(mask_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(mask_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             
             
             # Create mask for each object and name, publish it

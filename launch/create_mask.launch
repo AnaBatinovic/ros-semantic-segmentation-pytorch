@@ -1,0 +1,15 @@
+
+<launch>
+    <arg name="namespace" default="$(env UAV_NAMESPACE)"/>
+    <arg name="segmentation_image_raw" default="/camera/color/image_raw/output"/>
+    <arg name="labeled_image_raw" default="labeled/color/image_raw"/>
+    <arg name="labeled_image_segmented" default="labeled/color/image_segmented"/>
+    
+    <group ns="$(arg namespace)">
+        <node name="create_mask" pkg="semantic_segmentation_ros" type="create_mask.py" output="screen" >
+            <remap from="segmentation/color/image_raw" to="$(arg segmentation_image_raw)"/>
+        </node>
+    </group>
+
+</launch>
+
